@@ -5,7 +5,11 @@ import {config} from "dotenv"
 import cookieParser from "cookie-parser";
 import { db_service } from "./lib/db.service.js";
 config() ;
-db_service().catch((err) => console.log(err))
+
+db_service().catch((err) => {
+    console.log(err.message),
+    process.exit(1)
+})
 
 const app = express() ;
 
