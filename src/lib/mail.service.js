@@ -3,7 +3,7 @@ import { config } from "dotenv";
 config()
 import nodemailer from "nodemailer"
 
-const emailService = async (email, otp) => {
+export const emailService = async (email, otp) => {
     const transport = nodemailer.createTransport({
         service: "gmail",
         auth:{
@@ -19,4 +19,4 @@ const emailService = async (email, otp) => {
     });
 };
 
-export default emailService;
+// export default emailService;
