@@ -3,72 +3,95 @@ import { createUserSchema } from "../utils/validators/user.validator.js";
 import { otpGenerator } from "../utils/generators/otp.generator.js";
 import hashService from "../lib/hash.service.js";
 import { emailService } from "../lib/mail.service.js";
-import { verifySchema } from "../utils/validators/otp.validator.js";
+import { resendSchema, verifySchema } from "../utils/validators/otp.validator.js";
 import { UserModel } from "../models/index.js";
 
 const authController = {
-  async REGISTER(req, res) {
+    async REGISTER(req, res) {
+        try {
+            const newUser = req.body;
+
+            await createUserSchema.validateAsync(newUser, { abortEarly: false });
+
+            const exists = await UserModel.findOne({ where: { email: newUser.email } });
+            if (exists) throw new ClientError("User already exists", 400);
+
+            const { otp, otpTime } = otpGenerator();
+
+            const hashedPassword = await hashService.hashPassword(newUser.password);
+
+            await emailService(newUser.email, otp);
+
+            await UserModel.create({
+                ...newUser,
+                password: hashedPassword,
+                otp,
+                otp_time: otpTime
+            });
+
+            return res.status(201).json({
+                message: "User successfully registered",
+                status: 201
+            });
+
+        } catch (err) {
+            return globalError(err, res);
+        }
+    },
+
+    async VERIFY(req, res) {
+        try {
+            const data = req.body;
+
+            await verifySchema.validateAsync(data, { abortEarly: false });
+
+            const findUser = await UserModel.findOne({ where: { email: data.email } });
+            if (!findUser) throw new ClientError('User not found', 404);
+
+            if (String(findUser.otp) !== String(data.otp)) {
+                throw new ClientError('OTP invalid', 400);
+            }
+
+            const currentDate = Date.now();
+            if (currentDate > findUser.otp_time) {
+                await UserModel.update({ otp: null, otp_time: null }, { where: { email: data.email } });
+                throw new ClientError('OTP expired', 400);
+            }
+
+            await UserModel.update(
+                { is_verified: true, otp: null, otp_time: null },
+                { where: { email: data.email } }
+            );
+
+            return res.json({ message: "OTP successfully verified!", status: 200 });
+
+        } catch (err) {
+            return globalError(err, res);
+        }
+    },
+
+    async RESEND_OTP(req, res) {
     try {
-      const newUser = req.body;
+        const data = req.body;
 
-      await createUserSchema.validateAsync(newUser, { abortEarly: false });
+        await resendSchema.validateAsync(data, { abortEarly: false });
 
-      const exists = await UserModel.findOne({ where: { email: newUser.email } });
-      if (exists) throw new ClientError("User already exists", 400);
+        const findUser = await UserModel.findOne({ where: { email: data.email } });
+        if (!findUser) throw new ClientError('User not found', 404);
 
-      const { otp, otpTime } = otpGenerator();
+        const { otp, otpTime } = otpGenerator();
 
-      const hashedPassword = await hashService.hashPassword(newUser.password);
+        await UserModel.update({ otp, otp_time: otpTime }, { where: { email: data.email } });
 
-      await emailService(newUser.email, otp);
+        await emailService(data.email, otp);
 
-      await UserModel.create({
-        ...newUser,
-        password: hashedPassword,
-        otp,
-        otp_time: otpTime
-      });
-
-      return res.status(201).json({
-        message: "User successfully registered",
-        status: 201
-      });
+        return res.json({ message: "OTP successfully resent!", status: 200 });
 
     } catch (err) {
-      return globalError(err, res);
+        return globalError(err, res);
     }
-  },
+},
 
-  async VERIFY(req, res) {
-    try {
-      const data = req.body;
-
-      await verifySchema.validateAsync(data, { abortEarly: false });
-
-      const findUser = await UserModel.findOne({ where: { email: data.email } });
-      if (!findUser) throw new ClientError('User not found', 404);
-
-      if (String(findUser.otp) !== String(data.otp)) {
-        throw new ClientError('OTP invalid', 400);
-      }
-
-      const currentDate = Date.now();
-      if (currentDate > findUser.otp_time) {
-        await UserModel.update({ otp: null, otp_time: null }, { where: { email: data.email } });
-        throw new ClientError('OTP expired', 400);
-      }
-
-      await UserModel.update(
-        { is_verified: true, otp: null, otp_time: null },
-        { where: { email: data.email } }
-      );
-
-      return res.json({ message: "OTP successfully verified!", status: 200 });
-
-    } catch (err) {
-      return globalError(err, res);
-    }
-  },
 
 };
 
