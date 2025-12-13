@@ -11,23 +11,17 @@ const authController = {
     try {
       const newUser = req.body;
 
-      // Validation
       await createUserSchema.validateAsync(newUser, { abortEarly: false });
 
-      // Check if user exists
       const exists = await UserModel.findOne({ where: { email: newUser.email } });
       if (exists) throw new ClientError("User already exists", 400);
 
-      // Generate OTP
       const { otp, otpTime } = otpGenerator();
 
-      // Hash password
       const hashedPassword = await hashService.hashPassword(newUser.password);
 
-      // Send OTP email
       await emailService(newUser.email, otp);
 
-      // Create user
       await UserModel.create({
         ...newUser,
         password: hashedPassword,
@@ -49,26 +43,21 @@ const authController = {
     try {
       const data = req.body;
 
-      // Validate input
       await verifySchema.validateAsync(data, { abortEarly: false });
 
-      // Find user
       const findUser = await UserModel.findOne({ where: { email: data.email } });
       if (!findUser) throw new ClientError('User not found', 404);
 
-      // Compare OTP (string vs number)
       if (String(findUser.otp) !== String(data.otp)) {
         throw new ClientError('OTP invalid', 400);
       }
 
-      // Check OTP expiration
       const currentDate = Date.now();
       if (currentDate > findUser.otp_time) {
         await UserModel.update({ otp: null, otp_time: null }, { where: { email: data.email } });
         throw new ClientError('OTP expired', 400);
       }
 
-      // Set user verified & clean OTP
       await UserModel.update(
         { is_verified: true, otp: null, otp_time: null },
         { where: { email: data.email } }
@@ -80,6 +69,11 @@ const authController = {
       return globalError(err, res);
     }
   },
+
 };
 
 export default authController;
+
+
+
+
