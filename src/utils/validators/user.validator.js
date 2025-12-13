@@ -59,7 +59,7 @@ export const createUserSchema = Joi.object({
     .valid('student', 'instructor', 'admin', 'super_admin')
     .default('student')
     .messages({
-      'any.only': 'Role must be one of student, instructor, or admin',
+      'any.only': 'Role must be one of student, instructor, admin, or super_admin',
     }),
 
   avatar: Joi.string()
@@ -96,6 +96,7 @@ export const updateUserSchema = Joi.object({
   }),
 
   password: Joi.string().min(6).max(100).messages({
+    'string.base': 'Password must be a string',
     'string.min': 'Password should have at least 6 characters',
     'string.max': 'Password should have at most 100 characters',
   }),
@@ -117,4 +118,35 @@ export const updateUserSchema = Joi.object({
   }),
 
   photo_id: Joi.string().allow(null, ''),
+
+  otp: Joi.number().integer().allow(null),
+
+  otp_time: Joi.date().allow(null),
+
+  is_verified: Joi.boolean(),
+});
+
+export const changePasswordSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Email must be a valid email address',
+    'any.required': 'Email is required',
+  }),
+  new_password: Joi.string().min(6).max(100).required().messages({
+    'string.base': 'New password must be a string',
+    'string.min': 'New password should have at least 6 characters',
+    'string.max': 'New password should have at most 100 characters',
+    'any.required': 'New password is required',
+  }),
+});
+
+export const loginSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Email must be a valid email address',
+    'any.required': 'Email is required',
+  }),
+  password: Joi.string().required().messages({
+    'string.base': 'Password must be a string',
+    'string.empty': 'Password cannot be empty',
+    'any.required': 'Password is required',
+  }),
 });

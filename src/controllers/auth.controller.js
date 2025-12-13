@@ -1,5 +1,5 @@
 import { ClientError, globalError } from "shokhijakhon-error-handler";
-import { createUserSchema } from "../utils/validators/user.validator.js";
+import { changePasswordSchema, createUserSchema } from "../utils/validators/user.validator.js";
 import { otpGenerator } from "../utils/generators/otp.generator.js";
 import hashService from "../lib/hash.service.js";
 import { emailService } from "../lib/mail.service.js";
@@ -71,26 +71,78 @@ const authController = {
     },
 
     async RESEND_OTP(req, res) {
-    try {
-        const data = req.body;
+        try {
+            const data = req.body;
 
-        await resendSchema.validateAsync(data, { abortEarly: false });
+            await resendSchema.validateAsync(data, { abortEarly: false });
 
-        const findUser = await UserModel.findOne({ where: { email: data.email } });
-        if (!findUser) throw new ClientError('User not found', 404);
+            const findUser = await UserModel.findOne({ where: { email: data.email } });
+            if (!findUser) throw new ClientError('User not found', 404);
 
-        const { otp, otpTime } = otpGenerator();
+            const { otp, otpTime } = otpGenerator();
 
-        await UserModel.update({ otp, otp_time: otpTime }, { where: { email: data.email } });
+            await UserModel.update({ otp, otp_time: otpTime }, { where: { email: data.email } });
 
-        await emailService(data.email, otp);
+            await emailService(data.email, otp);
 
-        return res.json({ message: "OTP successfully resent!", status: 200 });
+            return res.json({ message: "OTP successfully resent!", status: 200 });
 
-    } catch (err) {
-        return globalError(err, res);
+        } catch (err) {
+            return globalError(err, res);
+        }
+    },
+
+    async FORGOT_PASSWORD(req, res) {
+
+        try {
+            const data = req.body;
+
+            await resendSchema.validateAsync(data, { abortEarly: false });
+
+            const findUser = await UserModel.findOne({ where: { email: data.email } });
+            if (!findUser) throw new ClientError('User not found', 404);
+
+            await UserModel.update({ is_verified: false }, { where: { email: data.email } });
+
+            const { otp, otpTime } = otpGenerator();
+
+            await emailService(data.email, otp);
+
+            await UserModel.update({ otp, otp_time: otpTime }, { where: { email: data.email } });
+
+            return res.json({
+                message: "OTP has been sent. Please check your email",
+                status: 200
+            });
+
+        } catch (err) {
+            return globalError(err, res);
+        }
+    },
+
+    async CHANGE_PASSWORD(req, res) {
+        try {
+            const data = req.body;
+
+            await changePasswordSchema.validateAsync(data, { abortEarly: false });
+
+            const checkUser = await UserModel.findOne({ where: { email: data.email } });
+            if (!checkUser) throw new ClientError('User not found', 404);
+
+            const hashedPassword = await hashService.hashPassword(data.new_password);
+
+            await UserModel.update(
+                { password: hashedPassword },
+                { where: { email: data.email } }
+            );
+
+            return res.json({ message: "Password successfully changed", status: 200 });
+
+        } catch (err) {
+            return globalError(err, res);
+        }
     }
-},
+
 
 
 };
