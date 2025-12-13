@@ -1,28 +1,29 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../../lib/db.service.js";
 
-const InstructorModel = sequelize.define("Instructor", {
-    id : {
-        type : DataTypes.BIGINT,
-        autoIncrement : true,
-        primaryKey : true
+export default (sequelize) => {
+  const Instructor = sequelize.define("Instructor", {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      bio: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      skills: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
-    user_id : {
-        type : DataTypes.BIGINT,
-        allowNull : false
-    },
-    bio : {
-        type : DataTypes.TEXT,
-        allowNull : false
-    },
-    skills : {
-        type : DataTypes.STRING,
-        allowNull : false
+    {
+      tableName: "instructors",
+      timestamps: true,
     }
-
-},{
-    timestamps : true,
-    tableName : "instructors"
-});
-
-export default InstructorModel;
+  );
+  return Instructor
+};

@@ -1,39 +1,41 @@
-import { sequelize } from "../../lib/db.service.js";
 import { DataTypes } from "sequelize";
 
-const PaymentModel = sequelize.define("Payment", {
-    id: {
+export default (sequelize) => {
+  const Payment = sequelize.define("Payment", {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
-    },
-    purchase_id: {
+      },
+      purchase_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-    },
-    user_id: {
+      },
+      user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-    },
-    amount: {
+      },
+      amount: {
         type: DataTypes.DECIMAL(12, 2),
         allowNull: false,
-    },
-    status: {
+      },
+      status: {
         type: DataTypes.ENUM("pending", "paid", "canceled"),
-        default: "pending"
-    },
-    transaction_id: {
+        default: "pending",
+      },
+      transaction_id: {
         type: DataTypes.TEXT,
         allowNull: false,
-    },
-    paid_at: {
+      },
+      paid_at: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+      },
     },
-}, {
-    tableName: "payments",
-    timestamps: true
-});
-
-export default PaymentModel;
+    {
+      tableName: "payments",
+      timestamps: true,
+    }
+  );
+  return Payment;
+};

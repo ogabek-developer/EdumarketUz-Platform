@@ -1,47 +1,50 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../../lib/db.service.js";
 
-const CourseModel = sequelize.define(
-  "Course",
-  {
-    id: {
-      type: DataTypes.BIGINT,
-      autoIncrement: true,
-      primaryKey: true
+export default (sequelize) => {
+  const Course = sequelize.define("Course", {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      instructor_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      category_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      price: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: false,
+      },
+      level: {
+        type: DataTypes.ENUM("beginner", "intermediate", "advanced"),
+        defaultValue: "beginner",
+        allowNull: false,
+      },
+      is_free: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
+      lesson_count: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
     },
-    instructor_id: {
-      type: DataTypes.BIGINT,
-      allowNull: false
-    },
-    category_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    price: {
-      type: DataTypes.DECIMAL(12, 2),
-      allowNull: false
-    },
-    level: {
-      type: DataTypes.ENUM("beginner", "intermediate", "advanced"),
-      defaultValue : "beginner"
-    },
-    is_free: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
+    {
+      tableName: "courses",
+      timestamps: true,
     }
-  },
-  {
-    tableName: "courses",
-    timestamps: true
-  }
-);
-
-export default CourseModel;
+  );
+  return Course;
+};
