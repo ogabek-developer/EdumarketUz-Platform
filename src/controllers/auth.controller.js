@@ -7,7 +7,7 @@ import { resendSchema, verifySchema } from "../utils/validators/otp.validator.js
 // import { UserModel } from "../models/user/User.model.js";
 import jwtService from "../lib/jwt.service.js";
 import generatorTokenData from "../utils/generators/token.data.generator.js";
-import { UserModel } from "../models/index.js";
+import {  UserModel, RefreshTokenModel } from "../models/index.js";
 
 const authController = {
     async REGISTER(req, res) {
@@ -146,51 +146,58 @@ const authController = {
         }
     },
 
+
     async LOGIN(req, res) {
         try {
             const data = req.body;
-
             await loginSchema.validateAsync(data, { abortEarly: false });
 
-            const findUser = await UserModel.findOne({
-                where: { email: data.email }
-            });
+            const findUser = await UserModel.findOne({ where: { email: data.email } });
+            if (!findUser) throw new ClientError("Invalid email or password", 401);
+            if (!findUser.is_verified) throw new ClientError("Please verify your account first", 403);
 
-            if (!findUser) {
-                throw new ClientError("Invalid email or password", 401);
-            }
+            const isMatch = await hashService.comparePassword(data.password, findUser.password);
+            if (!isMatch) throw new ClientError("Invalid email or password", 401);
 
-            if (!findUser.is_verified) {
-                throw new ClientError("Please verify your account first", 403);
-            }
-
-            const isMatch = await hashService.comparePassword(
-                data.password,
-                findUser.password
-            );
-
-            if (!isMatch) {
-                throw new ClientError("Invalid email or password", 401);
-            }
-
-            const roleFlags = await generatorTokenData(findUser);
-
-            const tokenPayload = {
+            let tokenData = {
                 user_id: findUser.id,
                 role: findUser.role,
-                ...roleFlags
+                is_admin: false,
+                is_super: false,
+                is_student: false,
+                is_instructor: false
             };
 
-            const accessToken = jwtService.createAccessToken(tokenPayload);
-            const refreshToken = jwtService.createRefreshToken({
-                user_id: findUser.id
+            tokenData = await generatorTokenData(tokenData, findUser);
+
+            switch (findUser.role) {
+                case "student":
+                    tokenData.is_student = true;
+                    break;
+                case "instructor":
+                    tokenData.is_instructor = true;
+                    break;
+                case "admin":
+                    tokenData.is_admin = true;
+                    break;
+                case "super_admin":
+                    tokenData.is_super = true;
+                    tokenData.is_admin = true;
+                    break;
+            }
+
+            const accessToken = jwtService.createAccessToken(tokenData);
+            const refreshToken = jwtService.createRefreshToken({ user_id: findUser.id });
+
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+            await RefreshTokenModel.create({
+                user_id: findUser.id,
+                token: refreshToken,
+                expires_at: expiresAt
             });
 
-            res.cookie(
-                "refresh_token",
-                refreshToken,
-                jwtService.refreshTokenOptions
-            );
+            res.cookie("refresh_token", refreshToken, jwtService.refreshTokenOptions);
 
             return res.status(201).json({
                 message: "User logged in successfully!",
@@ -201,8 +208,79 @@ const authController = {
         } catch (err) {
             return globalError(err, res);
         }
-    }
+    },
 
+    async REFRESH(req, res) {
+    try {
+        const accessToken = req.headers?.authorization?.split(" ")[1] || null;
+        const refreshToken = req.cookies?.refresh_token;
+
+        if (!refreshToken) throw new ClientError("Refresh token not found", 401);
+
+        if (accessToken) {
+            try {
+                jwtService.parseAccessToken(accessToken);
+                return res.status(200).json({
+                    message: "Access token still valid",
+                    accessToken,
+                    status: 200
+                });
+            } catch (err) {
+                if (err.name !== "TokenExpiredError") throw err;
+            }
+        }
+
+        const storedToken = await RefreshTokenModel.findOne({ where: { token: refreshToken } });
+        if (!storedToken) throw new ClientError("Invalid refresh token", 401);
+
+        const now = new Date();
+        if (now > storedToken.expires_at) {
+            await RefreshTokenModel.destroy({ where: { id: storedToken.id } });
+            throw new ClientError("Refresh token expired", 401);
+        }
+
+        const user = await UserModel.findByPk(storedToken.user_id);
+        if (!user) throw new ClientError("User not found", 404);
+
+        let tokenData = {
+            user_id: user.id,
+            role: user.role,
+            is_admin: false,
+            is_super: false,
+            is_student: false,
+            is_instructor: false
+        };
+
+        tokenData = await generatorTokenData(tokenData, user);
+
+        switch (user.role) {
+            case "student":
+                tokenData.is_student = true;
+                break;
+            case "instructor":
+                tokenData.is_instructor = true;
+                break;
+            case "admin":
+                tokenData.is_admin = true;
+                break;
+            case "super_admin":
+                tokenData.is_super = true;
+                tokenData.is_admin = true;
+                break;
+        }
+
+        const newAccessToken = jwtService.createAccessToken(tokenData);
+
+        return res.status(200).json({
+            message: "Access token refreshed",
+            accessToken: newAccessToken,
+            status: 200
+        });
+
+    } catch (err) {
+        return globalError(err, res);
+    }
+}
 
 
 
