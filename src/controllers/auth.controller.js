@@ -1,9 +1,12 @@
 import { ClientError, globalError } from "shokhijakhon-error-handler";
-import { changePasswordSchema, createUserSchema } from "../utils/validators/user.validator.js";
+import { changePasswordSchema, createUserSchema, loginSchema } from "../utils/validators/user.validator.js";
 import { otpGenerator } from "../utils/generators/otp.generator.js";
 import hashService from "../lib/hash.service.js";
 import { emailService } from "../lib/mail.service.js";
 import { resendSchema, verifySchema } from "../utils/validators/otp.validator.js";
+// import { UserModel } from "../models/user/User.model.js";
+import jwtService from "../lib/jwt.service.js";
+import generatorTokenData from "../utils/generators/token.data.generator.js";
 import { UserModel } from "../models/index.js";
 
 const authController = {
@@ -141,7 +144,65 @@ const authController = {
         } catch (err) {
             return globalError(err, res);
         }
+    },
+
+    async LOGIN(req, res) {
+        try {
+            const data = req.body;
+
+            await loginSchema.validateAsync(data, { abortEarly: false });
+
+            const findUser = await UserModel.findOne({
+                where: { email: data.email }
+            });
+
+            if (!findUser) {
+                throw new ClientError("Invalid email or password", 401);
+            }
+
+            if (!findUser.is_verified) {
+                throw new ClientError("Please verify your account first", 403);
+            }
+
+            const isMatch = await hashService.comparePassword(
+                data.password,
+                findUser.password
+            );
+
+            if (!isMatch) {
+                throw new ClientError("Invalid email or password", 401);
+            }
+
+            const roleFlags = await generatorTokenData(findUser);
+
+            const tokenPayload = {
+                user_id: findUser.id,
+                role: findUser.role,
+                ...roleFlags
+            };
+
+            const accessToken = jwtService.createAccessToken(tokenPayload);
+            const refreshToken = jwtService.createRefreshToken({
+                user_id: findUser.id
+            });
+
+            res.cookie(
+                "refresh_token",
+                refreshToken,
+                jwtService.refreshTokenOptions
+            );
+
+            return res.status(201).json({
+                message: "User logged in successfully!",
+                accessToken,
+                status: 201
+            });
+
+        } catch (err) {
+            return globalError(err, res);
+        }
     }
+
 
 
 

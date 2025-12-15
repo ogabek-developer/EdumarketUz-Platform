@@ -12,7 +12,8 @@ const jwtService = {
         secure: process.env.NODE_ENV == "production", 
         sameSite: 'strict',
     },
-    roles: {is_admin: false, is_owner: false, is_client: false, is_super_admin: false},
+    roles: {is_admin: false, is_super: false},
 };
 
 export default jwtService;
+
