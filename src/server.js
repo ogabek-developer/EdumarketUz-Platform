@@ -26,4 +26,21 @@ app.listen(port, () => console.log(`Server is running on port : (http://127.0.0.
 
 
 
+// register / verify otp / resend otp / forgot password / change password / login / refresh ✔
+
+// super_admin  : get all users / create (admin / instructor) / update role (all users) / delete (all users)  
+// super_admin : categories (CRUD) / course (get courses , delete courses , update courses) / lesson (GET , PUT , DELETE)
+// super_admin : stats and reports (30 kunlik sotuvlar statistikasi , eng ko'p sotilgan kurslar ) !
+
+// admin : users (all get) / change role to (student/instructor) / blocked and Active (all users ) / course (GET, PUT)
+// admin : lessons (GET ALL) / stats and reports (30 kunlik sotuvlar statistikasi, eng ko'p sotilgan kurslar) 
+// admin : notifications create (notification)
+
+// Instructors : course (CRUD) / lessons (CRUD) 
+
+// students : GET my courses (USERS ALL)  / courses (GET + filter, name and category) orders and payments (POST, GET)
+//students : GET my courses to (LESSONS GET ALL MY LESSONS) / profile (GET , PUT , CHANGE_PASSWORD) 
+
+// majburiyatlar :  swagger , 2fa authentication , sequelizedan foydalanish , Refresh token : else = BOTTLE
+
 

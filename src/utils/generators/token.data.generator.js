@@ -1,56 +1,30 @@
+
 import { ClientError } from "shokhijakhon-error-handler";
-import { AdminModel, InstructorModel } from "../../models/index.js";
+import { AdminModel } from "../../models/index.js";
 
-async function generatorTokenData(findUser) {
-  const flags = {
-    is_student: false,
-    is_instructor: false,
-    is_admin: false,
-    is_super_admin: false
-  };
+async function generatorTokenData(tokenData, user) {
 
-  if (findUser.role === "student") {
-    return {
-      ...flags,
-      is_student: true
-    };
-  }
-
-  if (findUser.role === "instructor") {
-    const instructor = await InstructorModel.findOne({
-      where: { user_id: findUser.id },
-      attributes: ["id"]
-    });
-
-    if (!instructor) {
-      throw new ClientError("Instructor not found", 404);
-    }
-
-    return {
-      ...flags,
-      is_instructor: true,
-      instructor_id: instructor.id
-    };
-  }
-
-  if (findUser.role === "admin") {
+  if (user.role === "admin") {
     const admin = await AdminModel.findOne({
-      where: { user_id: findUser.id },
-      attributes: ["is_super"]
+      where: { user_id: user.id }
     });
 
     if (!admin) {
-      throw new ClientError("Admin not found", 404);
+      throw new ClientError("Admin data not found", 404);
     }
 
     return {
-      ...flags,
+      ...tokenData,
       is_admin: true,
-      is_super_admin: admin.is_super
+      is_super: admin.is_super
     };
   }
 
-  throw new ClientError("Invalid role", 400);
+  return {
+    ...tokenData,
+    is_admin: false,
+    is_super: false
+  };
 }
 
 export default generatorTokenData;
