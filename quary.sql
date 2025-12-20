@@ -6,11 +6,14 @@ SELECT * FROM users;
 
 SELECT * FROM  categories ;
 
-UPDATE users
+UPDATE users    
 SET role = 'super_admin'
 WHERE email = 'ogabek@gmail.com';
 
 
+SELECT * FROM instructors ;
 
+SELECT * FROM users ;
 
+SELECT * FROM courses ;
 

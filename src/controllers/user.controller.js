@@ -1,5 +1,10 @@
 import { globalError, ClientError } from "shokhijakhon-error-handler";
-import { UserModel } from "../models/index.js";
+import { sequelize } from "../lib/db.service.js";
+import {
+    UserModel,
+    AdminModel,
+    InstructorModel
+} from "../models/index.js";
 import { updateUserRoleSchema } from "../utils/validators/update.role.js";
 
 const userController = {
@@ -41,56 +46,115 @@ const userController = {
     },
 
     async DELETE_USER(req, res) {
+        const transaction = await sequelize.transaction();
+
         try {
             const { id } = req.params;
 
-            const user = await UserModel.findByPk(id);
+            const user = await UserModel.findByPk(id, { transaction });
             if (!user) {
                 throw new ClientError("User not found", 404);
             }
 
-            await UserModel.destroy({ where: { id } });
+            await AdminModel.destroy({
+                where: { user_id: id },
+                transaction
+            });
+
+            await InstructorModel.destroy({
+                where: { user_id: id },
+                transaction
+            });
+
+            await UserModel.destroy({
+                where: { id },
+                transaction
+            });
+
+            await transaction.commit();
 
             return res.json({
                 status: 200,
                 message: "User successfully deleted"
             });
+
         } catch (error) {
+            await transaction.rollback();
             return globalError(error, res);
         }
     },
 
-
     async UPDATE_ROLE(req, res) {
+        const transaction = await sequelize.transaction();
+
         try {
             const { id } = req.params;
-            const data = req.body;
+            const { role } = req.body;
 
-            await updateUserRoleSchema.validateAsync(data, { abortEarly: false });
+            await updateUserRoleSchema.validateAsync(
+                { role },
+                { abortEarly: false }
+            );
 
-            const user = await UserModel.findByPk(id);
+            const user = await UserModel.findByPk(id, { transaction });
             if (!user) {
                 throw new ClientError("User not found", 404);
             }
 
             if (user.id === req.user.user_id) {
-                throw new ClientError("You cannot change your own role", 400);
+                throw new ClientError(
+                    "You cannot change your own role",
+                    400
+                );
             }
 
+            await AdminModel.destroy({
+                where: { user_id: id },
+                transaction
+            });
+
+            await InstructorModel.destroy({
+                where: { user_id: id },
+                transaction
+            });
+
             await UserModel.update(
-                { role: data.role },
-                { where: { id } }
+                { role },
+                { where: { id }, transaction }
             );
+
+            if (role === "admin") {
+                await AdminModel.create(
+                    {
+                        user_id: id,
+                        is_super: false
+                    },
+                    { transaction }
+                );
+            }
+
+            if (role === "instructor") {
+                await InstructorModel.create(
+                    {
+                        user_id: id,
+                        bio: "",
+                        skills: ""
+                    },
+                    { transaction }
+                );
+            }
+
+            await transaction.commit();
 
             return res.json({
                 status: 200,
-                message: `User role updated to ${data.role}`
+                message: `User role updated to ${role}`
             });
 
         } catch (error) {
+            await transaction.rollback();
             return globalError(error, res);
         }
-
     }
 };
 

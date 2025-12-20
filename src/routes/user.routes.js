@@ -17,3 +17,4 @@ userRouter.put('/:id', tokenGuard , userController.UPDATE_ROLE)
 
 
 export default userRouter ;
+

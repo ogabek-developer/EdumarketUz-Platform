@@ -39,6 +39,7 @@ export default (sequelize) => {
       lesson_count: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        
       },
     },
     {

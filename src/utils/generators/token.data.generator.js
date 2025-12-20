@@ -17,7 +17,7 @@ async function generatorTokenData(tokenData, user) {
       ...tokenData,
       is_admin: true,
       is_super: admin.is_super
-    };
+    };  
   }
 
   return {
