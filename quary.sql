@@ -15,5 +15,5 @@ SELECT * FROM instructors ;
 
 SELECT * FROM users ;
 
-SELECT * FROM courses ;
+SELECT * FROM lessons ;
 

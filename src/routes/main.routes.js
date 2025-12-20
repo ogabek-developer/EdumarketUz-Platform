@@ -9,6 +9,7 @@ import instructorRouter from "./instructor.routes.js";
 import adminRouter from "./admin.routes.js";
 import notificationRouter from "./notification.routes.js";
 import courseRouter from "./course.routes.js";
+import lessonRouter from "./lesson.routes.js";
 
 const mainRouter = Router() ;
 
@@ -19,6 +20,7 @@ mainRouter.use('/instructor', instructorRouter) ;
 mainRouter.use("/admin", adminRouter);
 mainRouter.use("/notification", notificationRouter) ;
 mainRouter.use("/course", courseRouter) ;
+mainRouter.use('/lesson', lessonRouter);
 
 
 export default mainRouter;
