@@ -1,6 +1,7 @@
 import { ClientError, globalError } from "shokhijakhon-error-handler";
 import { CourseModel, CategoryModel, InstructorModel, UserModel } from "../models/index.js";
 import { createCourseSchema, updateCourseSchema } from "../utils/validators/course.validator.js";
+import logger from "../utils/logger.js";
 
 const courseController = {
 
@@ -32,6 +33,8 @@ const courseController = {
                 lesson_count: data.lesson_count || 1
             });
 
+            logger.info(`Course created: id=${course.id}, name=${course.name}, instructor_id=${instructor.id}`);
+
             const response = {
                 id: course.id,
                 name: course.name,
@@ -57,6 +60,7 @@ const courseController = {
             return res.status(201).json({ status: 201, data: response });
 
         } catch (error) {
+            logger.error(`CREATE error: ${error.message}`);
             return globalError(error, res);
         }
     },
@@ -92,8 +96,11 @@ const courseController = {
                 updatedAt: course.updatedAt
             }));
 
+            logger.info(`Fetched all courses, count=${courses.length}`);
+
             return res.json({ status: 200, data: response });
         } catch (error) {
+            logger.error(`GET_ALL error: ${error.message}`);
             return globalError(error, res);
         }
     },
@@ -107,6 +114,8 @@ const courseController = {
                 ]
             });
             if (!course) throw new ClientError("Course not found", 404);
+
+            logger.info(`Fetched course by id=${req.params.id}`);
 
             const response = {
                 id: course.id,
@@ -132,6 +141,7 @@ const courseController = {
 
             return res.json({ status: 200, data: response });
         } catch (error) {
+            logger.error(`GET_BY_ID error: ${error.message}`);
             return globalError(error, res);
         }
     },
@@ -146,7 +156,6 @@ const courseController = {
 
             if (req.user.role === "instructor") {
                 const instructor = await InstructorModel.findByPk(data.instructor_id);
-                console.log(instructor, "bu o'sha")
                 if (!instructor || instructor.user_id !== req.user.user_id) {
                     throw new ClientError("You can only update your own courses", 403);
                 }
@@ -160,8 +169,11 @@ const courseController = {
 
             await CourseModel.update(data, { where: { id: course.id } });
 
+            logger.info(`Course updated: id=${course.id}, data=${JSON.stringify(data)}`);
+
             return res.json({ status: 200, message: "Course updated" });
         } catch (error) {
+            logger.error(`UPDATE error: ${error.message}`);
             return globalError(error, res);
         }
     },
@@ -180,8 +192,11 @@ const courseController = {
 
             await CourseModel.destroy({ where: { id: course.id } });
 
+            logger.info(`Course deleted: id=${course.id}`);
+
             return res.json({ status: 200, message: "Course deleted" });
         } catch (error) {
+            logger.error(`DELETE error: ${error.message}`);
             return globalError(error, res);
         }
     }
