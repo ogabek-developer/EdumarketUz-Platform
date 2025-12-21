@@ -1,7 +1,7 @@
-
 import { Op } from "sequelize";
 import { ClientError, globalError } from "shokhijakhon-error-handler";
 import { PurchaseModel, CourseModel, UserModel } from "../models/index.js";
+import logger from "../utils/logger.js";
 
 const statsController = {
 
@@ -30,6 +30,7 @@ const statsController = {
       });
 
       if (!sales.length) {
+        logger.info("No sales in the last 30 days");
         return res.json({ status: 200, message: "No sales in the last 30 days", data: [] });
       }
 
@@ -50,9 +51,12 @@ const statsController = {
         }
       }));
 
+      logger.info(`Fetched last 30 days sales, count=${stats.length}`);
+
       return res.json({ status: 200, data: stats });
 
     } catch (error) {
+      logger.error(`LAST_30_DAYS_SALES error: ${error.message}`);
       return globalError(error, res);
     }
   }
