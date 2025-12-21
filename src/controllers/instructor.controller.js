@@ -1,11 +1,10 @@
-
-
 import { ClientError, globalError } from "shokhijakhon-error-handler";
 import { InstructorModel, UserModel } from "../models/index.js";
 import {
   createInstructorSchema,
   updateInstructorSchema
 } from "../utils/validators/instructor.validator.js";
+import logger from "../utils/logger.js";
 
 const instructorController = {
 
@@ -37,12 +36,15 @@ const instructorController = {
         skills: data.skills
       });
 
+      logger.info(`Instructor created: id=${instructor.id}, user_id=${data.user_id}`);
+
       return res.status(201).json({
         status: 201,
         data: instructor
       });
 
     } catch (error) {
+      logger.error(`CREATE error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -56,12 +58,15 @@ const instructorController = {
         }
       });
 
+      logger.info(`Fetched all instructors, count=${instructors.length}`);
+
       return res.json({
         status: 200,
         data: instructors
       });
 
     } catch (error) {
+      logger.error(`GET_ALL error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -81,12 +86,15 @@ const instructorController = {
         throw new ClientError("Instructor not found", 404);
       }
 
+      logger.info(`Fetched instructor by id=${id}`);
+
       return res.json({
         status: 200,
         data: instructor
       });
 
     } catch (error) {
+      logger.error(`GET_BY_ID error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -105,12 +113,15 @@ const instructorController = {
 
       await instructor.update(data);
 
+      logger.info(`Instructor updated: id=${id}, data=${JSON.stringify(data)}`);
+
       return res.json({
         status: 200,
         message: "Instructor updated successfully"
       });
 
     } catch (error) {
+      logger.error(`UPDATE error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -133,12 +144,15 @@ const instructorController = {
         { where: { id: userId } }
       );
 
+      logger.info(`Instructor deleted: id=${id}, user_id=${userId}`);
+
       return res.json({
         status: 200,
         message: "Instructor deleted and user role reverted to student"
       });
 
     } catch (error) {
+      logger.error(`DELETE error: ${error.message}`);
       return globalError(error, res);
     }
   }

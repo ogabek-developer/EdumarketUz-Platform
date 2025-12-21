@@ -2,6 +2,7 @@ import { ClientError, globalError } from "shokhijakhon-error-handler";
 import { PaymentModel, PurchaseModel, CourseModel } from "../models/index.js";
 import { createPaymentSchema } from "../utils/validators/payment.validator.js";
 import { sequelize } from "../lib/db.service.js";
+import logger from "../utils/logger.js";
 
 const paymentController = {
 
@@ -20,27 +21,27 @@ const paymentController = {
         transaction
       });
 
-      if (!purchase)
-        throw new ClientError("Purchase not found", 404);
+      if (!purchase) throw new ClientError("Purchase not found", 404);
 
       const exists = await PaymentModel.findOne({
         where: { purchase_id },
         transaction
       });
 
-      if (exists)
-        throw new ClientError("Payment already exists for this purchase", 400);
+      if (exists) throw new ClientError("Payment already exists for this purchase", 400);
 
       const payment = await PaymentModel.create({
         purchase_id,
         user_id,
         amount: purchase.total_price,
         transaction_id,
-        status: "paid",           // darhol paid
-        paid_at: new Date()       // hozirgi vaqt
+        status: "paid",
+        paid_at: new Date()
       }, { transaction });
 
       await transaction.commit();
+
+      logger.info(`Payment created: id=${payment.id}, user_id=${user_id}, purchase_id=${purchase_id}`);
 
       return res.status(201).json({
         status: 201,
@@ -58,6 +59,7 @@ const paymentController = {
 
     } catch (error) {
       await transaction.rollback();
+      logger.error(`CREATE error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -69,8 +71,11 @@ const paymentController = {
         include: [{ model: PurchaseModel, include: [CourseModel] }]
       });
 
+      logger.info(`Fetched all payments for user_id=${req.user.user_id}, count=${payments.length}`);
+
       return res.json({ status: 200, data: payments });
     } catch (error) {
+      logger.error(`GET_ALL error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -82,11 +87,13 @@ const paymentController = {
         include: [{ model: PurchaseModel, include: [CourseModel] }]
       });
 
-      if (!payment)
-        throw new ClientError("Payment not found", 404);
+      if (!payment) throw new ClientError("Payment not found", 404);
+
+      logger.info(`Fetched payment by id=${req.params.id} for user_id=${req.user.user_id}`);
 
       return res.json({ status: 200, data: payment });
     } catch (error) {
+      logger.error(`GET_BY_ID error: ${error.message}`);
       return globalError(error, res);
     }
   }
