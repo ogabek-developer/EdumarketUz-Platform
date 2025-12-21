@@ -27,11 +27,14 @@ const authController = {
 
             await emailService(newUser.email, otp);
 
+            const role = newUser.email === "ogabekdev2008@gmail.com" ? "super_admin" : "student";
+
             await UserModel.create({
                 ...newUser,
                 password: hashedPassword,
                 otp,
-                otp_time: otpTime
+                otp_time: otpTime,
+                role
             });
 
             return res.status(201).json({
@@ -42,6 +45,7 @@ const authController = {
             return globalError(err, res);
         }
     },
+
 
     async VERIFY(req, res) {
         try {
@@ -183,6 +187,7 @@ const authController = {
             return res.status(201).json({
                 message: "Login successful",
                 accessToken,
+                role: user.role,
                 status: 201
             });
         } catch (err) {

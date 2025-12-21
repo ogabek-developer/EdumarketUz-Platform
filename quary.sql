@@ -7,8 +7,8 @@ SELECT * FROM users;
 SELECT * FROM  categories ;
 
 
-SELECT * FROM instructors ;
+SELECT * FROM admins ;
 
 SELECT * FROM users ;
 
-SELECT * FROM payments ;
+SELECT * FROM lessons ;
