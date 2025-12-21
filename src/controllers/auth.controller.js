@@ -11,6 +11,7 @@ import { resendSchema, verifySchema } from "../utils/validators/otp.validator.js
 import jwtService from "../lib/jwt.service.js";
 import generatorTokenData from "../utils/generators/token.data.generator.js";
 import { UserModel, RefreshTokenModel } from "../models/index.js";
+import logger from "../utils/logger.js";
 
 const authController = {
 
@@ -37,15 +38,17 @@ const authController = {
                 role
             });
 
+            logger.info(`User registered successfully: ${newUser.email}`);
+
             return res.status(201).json({
                 message: "User successfully registered",
                 status: 201
             });
         } catch (err) {
+            logger.error(`REGISTER error: ${err.message}`);
             return globalError(err, res);
         }
     },
-
 
     async VERIFY(req, res) {
         try {
@@ -72,8 +75,11 @@ const authController = {
                 { where: { email: data.email } }
             );
 
+            logger.info(`OTP verified successfully: ${data.email}`);
+
             return res.json({ message: "OTP successfully verified", status: 200 });
         } catch (err) {
+            logger.error(`VERIFY error: ${err.message}`);
             return globalError(err, res);
         }
     },
@@ -95,8 +101,11 @@ const authController = {
 
             await emailService(data.email, otp);
 
+            logger.info(`OTP resent to: ${data.email}`);
+
             return res.json({ message: "OTP resent", status: 200 });
         } catch (err) {
+            logger.error(`RESEND_OTP error: ${err.message}`);
             return globalError(err, res);
         }
     },
@@ -117,11 +126,14 @@ const authController = {
                 { where: { email: data.email } }
             );
 
+            logger.info(`Forgot password OTP sent to: ${data.email}`);
+
             return res.json({
                 message: "OTP sent for password reset",
                 status: 200
             });
         } catch (err) {
+            logger.error(`FORGOT_PASSWORD error: ${err.message}`);
             return globalError(err, res);
         }
     },
@@ -141,8 +153,11 @@ const authController = {
                 { where: { email: data.email } }
             );
 
+            logger.info(`Password changed for user: ${data.email}`);
+
             return res.json({ message: "Password changed", status: 200 });
         } catch (err) {
+            logger.error(`CHANGE_PASSWORD error: ${err.message}`);
             return globalError(err, res);
         }
     },
@@ -184,6 +199,8 @@ const authController = {
 
             res.cookie("refresh_token", refreshToken, jwtService.refreshTokenOptions);
 
+            logger.info(`User logged in: ${data.email}`);
+
             return res.status(201).json({
                 message: "Login successful",
                 accessToken,
@@ -191,6 +208,7 @@ const authController = {
                 status: 201
             });
         } catch (err) {
+            logger.error(`LOGIN error: ${err.message}`);
             return globalError(err, res);
         }
     },
@@ -221,12 +239,15 @@ const authController = {
 
             const newAccessToken = jwtService.createAccessToken(tokenData);
 
+            logger.info(`Access token refreshed for user: ${user.email}`);
+
             return res.json({
                 message: "Access token refreshed",
                 accessToken: newAccessToken,
                 status: 200
             });
         } catch (err) {
+            logger.error(`REFRESH error: ${err.message}`);
             return globalError(err, res);
         }
     }

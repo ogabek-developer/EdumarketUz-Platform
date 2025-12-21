@@ -1,10 +1,10 @@
-
 import { ClientError, globalError } from "shokhijakhon-error-handler";
 import { AdminModel, UserModel } from "../models/index.js";
 import {
   createAdminSchema,
   updateAdminSchema
 } from "../utils/validators/admin.validator.js";
+import logger from "../utils/logger.js";
 
 const adminController = {
 
@@ -39,12 +39,15 @@ const adminController = {
         is_super: data.is_super
       });
 
+      logger.info(`Admin created: user_id=${data.user_id}, is_super=${data.is_super}`);
+
       return res.status(201).json({
         status: 201,
         data: admin
       });
 
     } catch (error) {
+      logger.error(`CREATE error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -58,12 +61,15 @@ const adminController = {
         }
       });
 
+      logger.info(`Fetched all admins, count=${admins.length}`);
+
       return res.json({
         status: 200,
         data: admins
       });
 
     } catch (error) {
+      logger.error(`GET_ALL error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -83,12 +89,15 @@ const adminController = {
         throw new ClientError("Admin not found", 404);
       }
 
+      logger.info(`Fetched admin by id=${id}`);
+
       return res.json({
         status: 200,
         data: admin
       });
 
     } catch (error) {
+      logger.error(`GET_BY_ID error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -111,12 +120,15 @@ const adminController = {
 
       await admin.update({ is_super: data.is_super });
 
+      logger.info(`Admin updated: id=${id}, is_super=${data.is_super}`);
+
       return res.json({
         status: 200,
         message: "Admin updated successfully"
       });
 
     } catch (error) {
+      logger.error(`UPDATE error: ${error.message}`);
       return globalError(error, res);
     }
   },
@@ -143,12 +155,15 @@ const adminController = {
         { where: { id: userId } }
       );
 
+      logger.info(`Admin deleted: id=${id}, user_id=${userId}, role reverted to student`);
+
       return res.json({
         status: 200,
         message: "Admin deleted and user role reverted to student"
       });
 
     } catch (error) {
+      logger.error(`DELETE error: ${error.message}`);
       return globalError(error, res);
     }
   }
