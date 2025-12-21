@@ -12,3 +12,4 @@ SELECT * FROM admins ;
 SELECT * FROM users ;
 
 SELECT * FROM lessons ;
+

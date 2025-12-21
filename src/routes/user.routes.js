@@ -4,6 +4,7 @@ import userController from "../controllers/user.controller.js";
 import tokenGuard from "../guards/check.token.guard.js";
 import superAdminGuard from "../guards/super_admin.guard.js";
 import adminGuard from "../guards/admin.guard.js";
+import {adminOrSuperAdminGuard} from "../guards/role.guard.js"
 
 const userRouter = Router() ;
 
@@ -13,7 +14,7 @@ userRouter.delete('/:id', tokenGuard , superAdminGuard , userController.DELETE_U
 
 // update user UPDATE_ROLE
 
-userRouter.put('/:id', tokenGuard , userController.UPDATE_ROLE)
+userRouter.put('/:id', tokenGuard  , adminOrSuperAdminGuard , userController.UPDATE_ROLE)
 
 
 export default userRouter ;
