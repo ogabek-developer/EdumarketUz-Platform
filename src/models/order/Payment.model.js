@@ -29,7 +29,7 @@ export default (sequelize) => {
       },
       paid_at: {
         type: DataTypes.DATE,
-        allowNull: false,
+        
       },
     },
     {

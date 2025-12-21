@@ -10,6 +10,8 @@ import adminRouter from "./admin.routes.js";
 import notificationRouter from "./notification.routes.js";
 import courseRouter from "./course.routes.js";
 import lessonRouter from "./lesson.routes.js";
+import purchaseRouter from "./purchase.routes.js";
+import paymentRouter from "./payment.routes.js";
 
 const mainRouter = Router() ;
 
@@ -21,6 +23,8 @@ mainRouter.use("/admin", adminRouter);
 mainRouter.use("/notification", notificationRouter) ;
 mainRouter.use("/course", courseRouter) ;
 mainRouter.use('/lesson', lessonRouter);
+mainRouter.use('/order', purchaseRouter) ;
+mainRouter.use('/payment', paymentRouter)
 
 
 export default mainRouter;
