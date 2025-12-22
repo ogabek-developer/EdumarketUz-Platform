@@ -5,6 +5,7 @@ import {config} from "dotenv"
 import cookieParser from "cookie-parser";
 import { db_service } from "./lib/db.service.js";
 import mainRouter from "./routes/main.routes.js";
+import errorHandler from "./guards/error.guard.js";
 config() ;
 
 db_service().catch((err) => {
@@ -17,7 +18,8 @@ const app = express() ;
 app.use(express.json());
 app.use(cors()) ;
 app.use(cookieParser()) ;
-app.use("/api", mainRouter)
+app.use("/api", mainRouter);
+app.use(errorHandler)
 
 
 const port = process.env.PORT || 3000
