@@ -20,7 +20,7 @@ export const createCourseSchema = Joi.object({
       "number.integer": "Category ID butun son bo‘lishi kerak",
       "any.required": "Category ID majburiy"
     }),
-
+    
   name: Joi.string()
     .min(3)
     .max(150)
